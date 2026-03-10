@@ -16,6 +16,10 @@
     button.primary { background:#2563eb; color:#fff; border-color:#2563eb; }
     .muted { color:#57606a; font-size:14px; }
     .preview { max-width:100%; max-height:360px; border:1px solid #e5e7eb; border-radius:10px; background:#fafafa; }
+    .grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+    .preset-card { border:1px solid #e5e7eb; border-radius:10px; padding:10px; background:#fafbfc; }
+    .preset-img { width:100%; max-height:180px; object-fit:contain; border:1px solid #e5e7eb; border-radius:8px; background:#fff; }
+    @media (max-width:640px){ .grid{grid-template-columns:1fr;} }
   </style>
 </head>
 <body>
@@ -49,6 +53,35 @@
       <img id="preview" class="preview" alt="preview" />
     </section>
 
+    <section class="card">
+      <div class="row" style="justify-content:space-between; margin-bottom:8px;">
+        <strong>정방형 프리뷰 (64 / 128 / 256 / 512)</strong>
+        <span class="muted">업로드하면 자동 생성됩니다.</span>
+      </div>
+      <div class="grid">
+        <div class="preset-card">
+          <div class="muted">64x64</div>
+          <img id="sq64" class="preset-img" alt="64 preview" />
+          <a id="dl64" class="btn" download="resized-64x64.png" style="margin-top:8px;">64 다운로드</a>
+        </div>
+        <div class="preset-card">
+          <div class="muted">128x128</div>
+          <img id="sq128" class="preset-img" alt="128 preview" />
+          <a id="dl128" class="btn" download="resized-128x128.png" style="margin-top:8px;">128 다운로드</a>
+        </div>
+        <div class="preset-card">
+          <div class="muted">256x256</div>
+          <img id="sq256" class="preset-img" alt="256 preview" />
+          <a id="dl256" class="btn" download="resized-256x256.png" style="margin-top:8px;">256 다운로드</a>
+        </div>
+        <div class="preset-card">
+          <div class="muted">512x512</div>
+          <img id="sq512" class="preset-img" alt="512 preview" />
+          <a id="dl512" class="btn" download="resized-512x512.png" style="margin-top:8px;">512 다운로드</a>
+        </div>
+      </div>
+    </section>
+
     <canvas id="canvas" style="display:none;"></canvas>
   </main>
 
@@ -72,6 +105,23 @@
       heightInput.value = h;
     }
 
+    function renderSquare(size) {
+      if (!originalImage) return;
+      canvas.width = size;
+      canvas.height = size;
+      ctx.clearRect(0, 0, size, size);
+      ctx.drawImage(originalImage, 0, 0, size, size);
+      const dataUrl = canvas.toDataURL('image/png');
+      document.getElementById(`sq${size}`).src = dataUrl;
+      const dl = document.getElementById(`dl${size}`);
+      dl.href = dataUrl;
+      dl.download = `resized-${size}x${size}.png`;
+    }
+
+    function renderSquarePreviews() {
+      [64, 128, 256, 512].forEach(renderSquare);
+    }
+
     preset100.addEventListener('click', () => setPreset(100, 100));
     preset200.addEventListener('click', () => setPreset(200, 200));
 
@@ -86,6 +136,7 @@
           originalImage = img;
           preview.src = img.src;
           info.textContent = `원본: ${img.width}x${img.height}`;
+          renderSquarePreviews();
         };
         img.src = reader.result;
       };
