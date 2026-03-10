@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>resizing image</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; background:#f6f8fa; color:#111; }
+    .wrap { max-width: 860px; margin: 0 auto; padding: 24px 16px 48px; }
+    h1 { margin: 0 0 12px; }
+    .card { background:#fff; border:1px solid #d0d7de; border-radius:14px; padding:16px; margin-bottom:12px; }
+    .row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+    input[type="number"] { width:120px; padding:8px; border:1px solid #d0d7de; border-radius:8px; }
+    input[type="file"] { padding:8px; }
+    button, a.btn { border:1px solid #d0d7de; background:#fff; padding:8px 12px; border-radius:8px; cursor:pointer; text-decoration:none; color:#111; display:inline-block; }
+    button.primary { background:#2563eb; color:#fff; border-color:#2563eb; }
+    .muted { color:#57606a; font-size:14px; }
+    .preview { max-width:100%; max-height:360px; border:1px solid #e5e7eb; border-radius:10px; background:#fafafa; }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <h1>resizing image</h1>
+    <p class="muted">이미지를 업로드하고 원하는 픽셀로 리사이징 후 다운로드하세요.</p>
+
+    <section class="card">
+      <div class="row" style="margin-bottom:8px;">
+        <input id="fileInput" type="file" accept="image/*" />
+      </div>
+      <div class="row" style="margin-bottom:8px;">
+        <label>가로 <input id="widthInput" type="number" min="1" value="100" /></label>
+        <label>세로 <input id="heightInput" type="number" min="1" value="100" /></label>
+      </div>
+      <div class="row" style="margin-bottom:8px;">
+        <button id="preset100">100x100</button>
+        <button id="preset200">200x200</button>
+      </div>
+      <div class="row">
+        <button id="resizeBtn" class="primary">리사이징</button>
+        <a id="downloadBtn" class="btn" download="resized-image.png">다운로드</a>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="row" style="justify-content:space-between; margin-bottom:8px;">
+        <strong>미리보기</strong>
+        <span id="info" class="muted">원본을 업로드해주세요.</span>
+      </div>
+      <img id="preview" class="preview" alt="preview" />
+    </section>
+
+    <canvas id="canvas" style="display:none;"></canvas>
+  </main>
+
+  <script>
+    const fileInput = document.getElementById('fileInput');
+    const widthInput = document.getElementById('widthInput');
+    const heightInput = document.getElementById('heightInput');
+    const resizeBtn = document.getElementById('resizeBtn');
+    const preset100 = document.getElementById('preset100');
+    const preset200 = document.getElementById('preset200');
+    const preview = document.getElementById('preview');
+    const info = document.getElementById('info');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+
+    let originalImage = null;
+
+    function setPreset(w, h) {
+      widthInput.value = w;
+      heightInput.value = h;
+    }
+
+    preset100.addEventListener('click', () => setPreset(100, 100));
+    preset200.addEventListener('click', () => setPreset(200, 200));
+
+    fileInput.addEventListener('change', (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        const img = new Image();
+        img.onload = () => {
+          originalImage = img;
+          preview.src = img.src;
+          info.textContent = `원본: ${img.width}x${img.height}`;
+        };
+        img.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    resizeBtn.addEventListener('click', () => {
+      if (!originalImage) {
+        alert('먼저 이미지를 업로드해주세요.');
+        return;
+      }
+
+      const w = Number(widthInput.value);
+      const h = Number(heightInput.value);
+      if (!w || !h || w < 1 || h < 1) {
+        alert('유효한 가로/세로 픽셀 값을 입력해주세요.');
+        return;
+      }
+
+      canvas.width = w;
+      canvas.height = h;
+      ctx.clearRect(0, 0, w, h);
+      ctx.drawImage(originalImage, 0, 0, w, h);
+
+      const dataUrl = canvas.toDataURL('image/png');
+      preview.src = dataUrl;
+      info.textContent = `리사이징 완료: ${w}x${h}`;
+      downloadBtn.href = dataUrl;
+      downloadBtn.download = `resized-${w}x${h}.png`;
+    });
+  </script>
+</body>
+</html>
